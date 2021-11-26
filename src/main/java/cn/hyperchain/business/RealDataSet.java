@@ -1,6 +1,7 @@
 package cn.hyperchain.business;
 
 import cn.hyperchain.types.Complex;
+import cn.hyperchain.types.EnergyRtnDto;
 import cn.hyperchain.types.WaveIndex;
 import cn.hyperchain.types.WaveStatus;
 import cn.hyperchain.utils.Tools;
@@ -19,8 +20,8 @@ public class RealDataSet {
 
     // param
     private final int FFT_POINT_NUM = 1024;
-    private final int SAMPLE_FREQ = 100;
-    private final int WIN = 4;
+    private final int SAMPLE_FREQ = 128;
+
 
     // 时域图像
     private final XYSeries originSeries = new XYSeries("origin");
@@ -156,19 +157,6 @@ public class RealDataSet {
             nArray[i] = d[i].abs() * 2 / FFT_POINT_NUM;
             pArray[i] = d[i].phase() * 180 / PI;
         }
-        // 根据平均点数计算参考频率及参考基波点
-        double  referFreq = SAMPLE_FREQ / (double)avgPoint;
-        double  referPoint = referFreq * FFT_POINT_NUM / SAMPLE_FREQ;
-        // 计算峰值找到基波,范围是参考基波点上下2个值
-        int index = Tools.findMaxVal(referPoint, WIN, nArray);
-        double referAmp = nArray[index].doubleValue();
-        double referPha = pArray[index].doubleValue();
-        log.info("referAmp["+index+"] = "+referAmp+" referPha["+index+"] = "+referPha+" 参考点 = "+referPoint);
-        // 根据基波幅值格式化
-//        for(int i=0; i<d.length / 2; i++) {
-//            nArray[i] = nArray[i].doubleValue() / referAmp;
-//            pArray[i] = pArray[i].doubleValue() - referPha;
-//        }
         // 设置动态图像
         synchronized (fftSeries) {
             fftSeries.clear();
@@ -176,6 +164,11 @@ public class RealDataSet {
                 fftSeries.add((double)i * SAMPLE_FREQ / FFT_POINT_NUM, nArray[i]);
             }
         }
+        // 根据平均点数计算参考频率及参考基波点
+        double  referFreq = SAMPLE_FREQ / (double)avgPoint;
+        double  referPoint = referFreq * FFT_POINT_NUM / SAMPLE_FREQ;
+        // 能量收集
+        EnergyRtnDto base = energyProcess(referPoint, d);
         // 打印各谐波的值
         String[] showName = {"基 波","2次谐波","3次谐波","4次谐波","5次谐波","6次谐波","7次谐波","8次谐波","9次谐波","10次谐波"};
         java.text.DecimalFormat df = new java.text.DecimalFormat("0.00");
@@ -183,18 +176,32 @@ public class RealDataSet {
         label.append("<html><body><table border=\"0\" width=\"800\">");
         for (int i=1; i<=10; i++) {
             label.append("<tr>");
-            int i1 = Tools.findMaxVal(index * i, WIN, nArray);
+            EnergyRtnDto i1 = energyProcess(base.getIndex() * i, d);
             label.append("<td>").append(showName[i-1]).append(": </td>");
-            label.append("<td> [点位索引] ").append(i1).append("</td>");
-            label.append("<td> <font size=\"3\" color=\"green\">[频率] ").append(df.format((double)i1 * SAMPLE_FREQ / FFT_POINT_NUM)).append("Hz</font>").append("</td>");
-            label.append("<td> <font size=\"3\" color=\"red\">[幅度] ").append(df.format(nArray[i1].doubleValue())).append("</font>").append("</td>");
-            label.append("<td> <font size=\"3\" color=\"blue\">[相位] ").append(df.format(pArray[i1].doubleValue())).append("°</font>").append("</td>");
-            label.append("<td> [实际值] ").append(d[i1]).append("</td>");
+            label.append("<td> [点位索引] ").append(i1.getIndex()).append("</td>");
+            label.append("<td> <font size=\"3\" color=\"green\">[频率] ").append(df.format(i1.getFreq())).append("Hz</font>").append("</td>");
+            label.append("<td> <font size=\"3\" color=\"red\">[幅度] ").append(df.format(i1.getRms())).append("</font>").append("</td>");
+            label.append("<td> <font size=\"3\" color=\"blue\">[相位] ").append(df.format(i1.getPhase() - base.getPhase())).append("°</font>").append("</td>");
+            label.append("<td> [实际值] ").append(i1.getReal()).append("</td>");
             label.append("<br/>");
             label.append("</tr>");
         }
         label.append("</table></body></html>");
         j1.setText(label.toString());
+    }
+
+
+    private EnergyRtnDto energyProcess(double referPoint, Complex[] d) {
+        int WIN = 4;
+        // 计算峰值找到基波,范围是参考基波点上下2个值
+        int index = Tools.findMaxVal(referPoint, WIN, d);
+        log.info("referAmp["+index+"] = "+d[index].abs()+" referPha["+index+"] = "+d[index].abs()+" 参考点 = "+referPoint);
+
+        double freq = index * FFT_POINT_NUM * 1.0 / SAMPLE_FREQ;
+        double rms = d[index].abs()  * 2 / FFT_POINT_NUM;
+        double phase = d[index].phase() * 180 / PI;
+        return new EnergyRtnDto(index, freq, rms, phase, d[index]);
+
     }
 
 }
