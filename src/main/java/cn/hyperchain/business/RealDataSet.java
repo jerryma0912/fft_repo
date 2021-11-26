@@ -10,6 +10,7 @@ import org.jfree.data.xy.XYSeries;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.Math.PI;
@@ -134,10 +135,13 @@ public class RealDataSet {
         Complex[] x = new Complex[FFT_POINT_NUM];
         int startIndex = startWave.getStartIndex();
         log.info("start_index="+startIndex+" len="+len+" point_sum="+cnt+" start_wave="+startWave);
+        double[] show = new double[FFT_POINT_NUM];
         for (int i = 0; i < FFT_POINT_NUM; i++) {
             double re = originSeries.getDataItem(startIndex+i).getYValue();
             x[i] = new Complex(re, 0);
+            show[i] = re;
         }
+        System.out.println(Arrays.toString(show));
         Complex[] y = FFT.fft(x);
         setFftSeries(y,avgWavePointCnt);
     }
@@ -195,11 +199,11 @@ public class RealDataSet {
         int WIN = 4;
         // 计算峰值找到基波,范围是参考基波点上下2个值
         int index = Tools.findMaxVal(referPoint, WIN, d);
-        log.info("referAmp["+index+"] = "+d[index].abs()+" referPha["+index+"] = "+d[index].abs()+" 参考点 = "+referPoint);
-
         double freq = index * FFT_POINT_NUM * 1.0 / SAMPLE_FREQ;
         double rms = d[index].abs()  * 2 / FFT_POINT_NUM;
         double phase = d[index].phase() * 180 / PI;
+        log.info("index = "+index+" freq = "+freq+" rms = "+rms+" phase = "+phase);
+
         return new EnergyRtnDto(index, freq, rms, phase, d[index]);
 
     }
