@@ -25,12 +25,20 @@ public class WaveStatus {
         boolean res = false;
         int neg = data - lastVal;
         if(neg != 0) {
-            if (neg > 0)  upCntAdd();
-            else res = downCntAdd();
+            if (neg > 0) {
+                upCntAdd();
+            }
+            else {
+                res = downCntAdd();
+            }
         }
         else {
-            if(waveStat == waveStatType.UP) upCntAdd();
-            else if(waveStat == waveStatType.DOWN) res = downCntAdd();
+            if(waveStat == waveStatType.UP) {
+                upCntAdd();
+            }
+            else if(waveStat == waveStatType.DOWN) {
+                res = downCntAdd();
+            }
         }
         lastVal = data;
         //log.info("neg "+neg+" upCnt "+upCnt+" downCnt "+downCnt+"   waveStat="+waveStat);
