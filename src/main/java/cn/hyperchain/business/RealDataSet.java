@@ -10,10 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.lang.Math.PI;
-import static java.lang.Math.sqrt;
-
 import cn.hyperchain.utils.FFT;
+
+import static java.lang.Math.*;
 
 @Slf4j
 public class RealDataSet {
@@ -183,7 +182,7 @@ public class RealDataSet {
             label.append("<td>").append(showName[i-1]).append(": </td>");
             label.append("<td> [点位索引] ").append(i1.getIndex()).append("</td>");
             label.append("<td> <font size=\"3\" color=\"green\">[频率] ").append(df.format(i1.getFreq())).append("Hz</font>").append("</td>");
-            label.append("<td> <font size=\"3\" color=\"red\">[幅度] ").append(df.format(i1.getRms())).append("</font>").append("</td>");
+            label.append("<td> <font size=\"3\" color=\"red\">[幅度] ").append(df.format(i1.getRms())).append("%</font>").append("</td>");
             label.append("<td> <font size=\"3\" color=\"blue\">[相位] ").append(df.format(i1.getPhase())).append("°</font>").append("</td>");
             label.append("<td> [实际值] ").append(i1.getReal()).append("</td>");
             label.append("<br/>");
@@ -242,9 +241,11 @@ public class RealDataSet {
     }
 
     private EnergyRtnDto PhaseCalibration(int rank, EnergyRtnDto base, EnergyRtnDto in) {
+        // 幅值采用百分比形式
+        double rms = in.getRms() * 100.0 / base.getRms();
         // 将基波相位至0度的偏差,依据相位校准公式进行校准
         double p = (in.getPhase() +  (0 - base.getPhase()) * rank + 180) % 360 - 180;
-        return new EnergyRtnDto(in.getIndex(), in.getFreq(), in.getRms(), p, in.getReal());
+        return new EnergyRtnDto(in.getIndex(), in.getFreq(), rms, p, in.getReal());
     }
 
 }
