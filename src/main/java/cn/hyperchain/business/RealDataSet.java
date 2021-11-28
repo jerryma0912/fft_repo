@@ -1,9 +1,6 @@
 package cn.hyperchain.business;
 
-import cn.hyperchain.types.Complex;
-import cn.hyperchain.types.EnergyRtnDto;
-import cn.hyperchain.types.WaveIndex;
-import cn.hyperchain.types.WaveStatus;
+import cn.hyperchain.types.*;
 import cn.hyperchain.utils.Tools;
 import lombok.extern.slf4j.Slf4j;
 import org.jfree.data.xy.XYSeries;
@@ -14,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.Math.PI;
+import static java.lang.Math.sqrt;
+
 import cn.hyperchain.utils.FFT;
 
 @Slf4j
@@ -197,10 +196,45 @@ public class RealDataSet {
 
     private EnergyRtnDto energyProcess(double referPoint, Complex[] d) {
         int WIN = 4;
-        // 计算峰值找到基波,范围是参考基波点上下2个值
-        int index = Tools.findMaxVal(referPoint, WIN, d);
-        double freq = index * SAMPLE_FREQ * 1.0 / FFT_POINT_NUM;
-        double rms = d[index].abs()  * 2 / FFT_POINT_NUM;
+        // 计算峰值,范围是参考点上下WIN个值
+        int start = Math.max((int)Math.floor(referPoint - WIN),1);
+        int end = (int)Math.ceil(referPoint + WIN);
+        Max m = Tools.solve(start, end, d);
+//        System.out.println("max1Index = "+m.max1Index+" max1 = "+m.max1);
+//        System.out.println("max2Index = "+m.max2Index+" max2 = "+m.max2);
+        // 计算
+        double lAcc = 0, hAcc = 0;
+        int lAccIndex, hAccIndex;
+        if(m.max1Index < m.max2Index) {
+            // 最大值 -> 极大值
+            lAccIndex = m.max1Index;
+            hAccIndex = m.max1Index + 1;
+        }
+        else {
+            // 极大值 -> 最大值
+            lAccIndex = m.max1Index - 1;
+            hAccIndex = m.max1Index;
+        }
+        for(int i=0; i< WIN; i++) {
+            lAcc += Math.pow(d[lAccIndex - i].abs() * 2 / FFT_POINT_NUM, 2);
+            hAcc += Math.pow(d[hAccIndex + i].abs() * 2 / FFT_POINT_NUM, 2);
+        }
+        double delta = 0;
+        if(m.max1Index < m.max2Index) {
+            // 最大值 -> 极大值
+            System.out.println("最大 - 极大");
+            delta = sqrt(hAcc) / (sqrt(lAcc) + sqrt(hAcc));
+        }
+        else {
+            // 极大值 -> 最大值
+            System.out.println("极大 - 最大");
+            delta = - sqrt(lAcc) / (sqrt(lAcc) + sqrt(hAcc));
+        }
+//        System.out.println("delta = "+delta);
+        int index = m.max1Index;
+        double freq = (index + delta) * SAMPLE_FREQ * 1.0 / FFT_POINT_NUM;
+        double rms = sqrt(lAcc + hAcc);
+
         double phase = d[index].phase() * 180 / PI;
         log.info("index = "+index+" freq = "+freq+" rms = "+rms+" phase = "+phase);
 
