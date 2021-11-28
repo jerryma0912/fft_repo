@@ -21,7 +21,7 @@ public class RealDataSet {
 
     // param
     private final int FFT_POINT_NUM = 1024;
-    private final int SAMPLE_FREQ = 128;
+    private final int SAMPLE_FREQ = 100;
 
 
     // 时域图像
@@ -171,7 +171,6 @@ public class RealDataSet {
         // 根据平均点数计算参考频率及参考基波点
         double  referFreq = SAMPLE_FREQ / (double)avgPoint;
         double  referPoint = referFreq * FFT_POINT_NUM / SAMPLE_FREQ;
-        // 能量收集
         EnergyRtnDto base = energyProcess(referPoint, d);
         // 打印各谐波的值
         String[] showName = {"基 波","2次谐波","3次谐波","4次谐波","5次谐波","6次谐波","7次谐波","8次谐波","9次谐波","10次谐波"};
@@ -181,11 +180,12 @@ public class RealDataSet {
         for (int i=1; i<=10; i++) {
             label.append("<tr>");
             EnergyRtnDto i1 = energyProcess(base.getIndex() * i, d);
+            i1 = PhaseCalibration(i, base, i1);
             label.append("<td>").append(showName[i-1]).append(": </td>");
             label.append("<td> [点位索引] ").append(i1.getIndex()).append("</td>");
             label.append("<td> <font size=\"3\" color=\"green\">[频率] ").append(df.format(i1.getFreq())).append("Hz</font>").append("</td>");
             label.append("<td> <font size=\"3\" color=\"red\">[幅度] ").append(df.format(i1.getRms())).append("</font>").append("</td>");
-            label.append("<td> <font size=\"3\" color=\"blue\">[相位] ").append(df.format(i1.getPhase() - base.getPhase())).append("°</font>").append("</td>");
+            label.append("<td> <font size=\"3\" color=\"blue\">[相位] ").append(df.format(i1.getPhase())).append("°</font>").append("</td>");
             label.append("<td> [实际值] ").append(i1.getReal()).append("</td>");
             label.append("<br/>");
             label.append("</tr>");
@@ -199,13 +199,18 @@ public class RealDataSet {
         int WIN = 4;
         // 计算峰值找到基波,范围是参考基波点上下2个值
         int index = Tools.findMaxVal(referPoint, WIN, d);
-        double freq = index * FFT_POINT_NUM * 1.0 / SAMPLE_FREQ;
+        double freq = index * SAMPLE_FREQ * 1.0 / FFT_POINT_NUM;
         double rms = d[index].abs()  * 2 / FFT_POINT_NUM;
         double phase = d[index].phase() * 180 / PI;
         log.info("index = "+index+" freq = "+freq+" rms = "+rms+" phase = "+phase);
 
         return new EnergyRtnDto(index, freq, rms, phase, d[index]);
+    }
 
+    private EnergyRtnDto PhaseCalibration(int rank, EnergyRtnDto base, EnergyRtnDto in) {
+        // 将基波相位至0度的偏差,依据相位校准公式进行校准
+        double p = (in.getPhase() +  (0 - base.getPhase()) * rank + 180) % 360 - 180;
+        return new EnergyRtnDto(in.getIndex(), in.getFreq(), in.getRms(), p, in.getReal());
     }
 
 }
