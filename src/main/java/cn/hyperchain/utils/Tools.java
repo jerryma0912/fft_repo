@@ -21,6 +21,25 @@ public class Tools {
     }
 
 
+    public static double mod(double angle) {
+        //Make angle between 0 and 360
+        angle %= 360;
+        //Make angle between -179 and 180
+        if (angle > 180 ) {
+            angle -= 360;
+        }
+        if (angle <= -180) {
+            angle += 360;
+        }
+        return angle;
+    }
+
+    @Test
+    public void testMod() {
+        double p = Tools.mod(73.94118119245337 +  (0 - 25.238917607292127) * 3);
+        System.out.println(p);
+    }
+
     public static Max solve(int low, int high, Complex[] d)
     {
         Max mm = new Max();

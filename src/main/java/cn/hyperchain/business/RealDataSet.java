@@ -221,12 +221,10 @@ public class RealDataSet {
         double delta = 0;
         if(m.max1Index < m.max2Index) {
             // 最大值 -> 极大值
-            System.out.println("最大 - 极大");
             delta = sqrt(hAcc) / (sqrt(lAcc) + sqrt(hAcc));
         }
         else {
             // 极大值 -> 最大值
-            System.out.println("极大 - 最大");
             delta = - sqrt(lAcc) / (sqrt(lAcc) + sqrt(hAcc));
         }
 //        System.out.println("delta = "+delta);
@@ -235,7 +233,7 @@ public class RealDataSet {
         double rms = sqrt(lAcc + hAcc);
 
         double phase = d[index].phase() * 180 / PI;
-        log.info("index = "+index+" freq = "+freq+" rms = "+rms+" phase = "+phase);
+        log.info("[energyProcess] index = "+index+" freq = "+freq+" rms = "+rms+" phase = "+phase);
 
         return new EnergyRtnDto(index, freq, rms, phase, d[index]);
     }
@@ -244,7 +242,8 @@ public class RealDataSet {
         // 幅值采用百分比形式
         double rms = in.getRms() * 100.0 / base.getRms();
         // 将基波相位至0度的偏差,依据相位校准公式进行校准
-        double p = (in.getPhase() +  (0 - base.getPhase()) * rank + 180) % 360 - 180;
+        double p = Tools.mod(in.getPhase() +  (0 - base.getPhase()) * rank);
+        log.info("[PhaseCalibration] rms = "+rms+" phase = "+ p);
         return new EnergyRtnDto(in.getIndex(), in.getFreq(), rms, p, in.getReal());
     }
 
