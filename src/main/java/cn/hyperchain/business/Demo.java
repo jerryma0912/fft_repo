@@ -1,8 +1,5 @@
 package cn.hyperchain.business;
 
-import cn.hyperchain.business.ChartPanel;
-import cn.hyperchain.business.RealDataSet;
-import cn.hyperchain.business.SerialTool;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -15,14 +12,15 @@ public class Demo {
     public static void main(String[] param) {
 
         // 新建串口
-        serialTool = new SerialTool(param[0]);
+        serialTool = new SerialTool();
         // 新建绘图数据集
         RealDataSet realDataSet = new RealDataSet();
         // 新建前端
-        chartPanel = new ChartPanel("血氧监测测试平台", realDataSet);
+        chartPanel = new ChartPanel("血氧监测测试平台", realDataSet, serialTool);
         chartPanel.pack();
         chartPanel.setVisible(true);
-
+//        serialTool.OpenSerialTool(param[0]);
+        
         while(true) {
             // 若队列小于20 这说明数据肯定没有收满
             if(serialTool.getSize() < 20) {

@@ -7,7 +7,9 @@ import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 import lombok.extern.slf4j.Slf4j;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * @author madj
@@ -29,7 +31,21 @@ public class SerialTool implements SerialPortEventListener {
     private final byte[] bytes = new byte[256];
     private final MessageQueue messageQueue = new MessageQueue(2048);
 
-    public SerialTool(String portName) {
+    public SerialTool() {}
+
+    public List<String> findAllSerial() {
+        Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
+        List<String> list = new ArrayList<>();
+        while (portEnum.hasMoreElements()) {
+            CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
+            list.add(currPortId.getName());
+        }
+        return list;
+    }
+
+    public void OpenSerialTool(String portName) {
+        close();
+
         CommPortIdentifier portId = null;
         Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
 
@@ -86,6 +102,7 @@ public class SerialTool implements SerialPortEventListener {
      */
     public synchronized void close() {
         if (serialPort != null) {
+            log.info(serialPort.getName()+" 关闭");
             serialPort.removeEventListener();
             serialPort.close();
         }

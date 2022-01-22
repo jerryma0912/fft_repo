@@ -1,6 +1,10 @@
 package cn.hyperchain.business;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Iterator;
+import java.util.List;
 import javax.swing.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +20,59 @@ import org.jfree.data.xy.XYSeriesCollection;
 @Slf4j
 public class ChartPanel extends javax.swing.JFrame {
 
-    public ChartPanel(String title, RealDataSet realDataSet) {
+    private JMenu comMenu = null;
+    private JMenuItem flushMenuItem = null;
+
+    private void flashMenu(SerialTool serialTool) {
+        Boolean first_flag = true;
+        // 清除老按钮
+        comMenu.removeAll();
+        comMenu.add(flushMenuItem);
+        comMenu.addSeparator();
+        // 添加新按钮
+        ButtonGroup comButtonGroup = new ButtonGroup();
+        List<String> l = serialTool.findAllSerial();
+        Iterator<String> it = l.iterator();
+        while (it.hasNext()) {
+            String str = it.next();
+            System.out.println(str);
+
+            final JRadioButtonMenuItem rb = new JRadioButtonMenuItem(str);
+            rb.setName(str);
+            comButtonGroup.add(rb);
+            comMenu.add(rb);
+            rb.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println(rb.getName()+": "+rb.isSelected());
+                    serialTool.OpenSerialTool(rb.getName());
+                }
+            });
+            // 设置默认项
+            if(first_flag) {
+                rb.setSelected(true);
+                serialTool.OpenSerialTool(rb.getName());
+                first_flag = false;
+            }
+        }
+    }
+    public ChartPanel(String title, RealDataSet realDataSet, SerialTool serialTool) {
 
         super(title);
         super.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        // 设置串口
+        JMenuBar menuBar = new JMenuBar();
+        comMenu = new JMenu("串口设置");
+        menuBar.add(comMenu);
+        flushMenuItem = new JMenuItem("刷新");
+        flashMenu(serialTool);
+        flushMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                flashMenu(serialTool);
+            }
+        });
+        super.setJMenuBar(menuBar);
         // 时域数据集设置
         final XYSeriesCollection originDataSet = new XYSeriesCollection();
         originDataSet.addSeries(realDataSet.getOriginSeries());
