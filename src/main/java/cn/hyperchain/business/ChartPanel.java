@@ -56,13 +56,13 @@ public class ChartPanel extends javax.swing.JFrame {
             }
         }
     }
-    public ChartPanel(String title, RealDataSet realDataSet, SerialTool serialTool) {
+    public ChartPanel(String title, RealDataSet realDataSet, SerialTool serialTool, String version) {
 
         super(title);
         super.setDefaultCloseOperation(EXIT_ON_CLOSE);
         // 设置串口
         JMenuBar menuBar = new JMenuBar();
-        comMenu = new JMenu("串口设置");
+        comMenu = new JMenu("串口");
         menuBar.add(comMenu);
         flushMenuItem = new JMenuItem("刷新");
         flashMenu(serialTool);
@@ -73,6 +73,11 @@ public class ChartPanel extends javax.swing.JFrame {
             }
         });
         super.setJMenuBar(menuBar);
+        // 设置版本号
+        JMenu aboutMenu = new JMenu("关于");
+        JMenuItem versionMenuItem = new JMenuItem("V "+version);
+        aboutMenu.add(versionMenuItem);
+        menuBar.add(aboutMenu);
         // 时域数据集设置
         final XYSeriesCollection originDataSet = new XYSeriesCollection();
         originDataSet.addSeries(realDataSet.getOriginSeries());
