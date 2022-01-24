@@ -17,7 +17,7 @@ public class Demo {
         // 新建绘图数据集
         RealDataSet realDataSet = new RealDataSet();
         // 新建前端
-        chartPanel = new ChartPanel("血氧监测工具", realDataSet, serialTool, version);
+        chartPanel = new ChartPanel("脉搏监测工具", realDataSet, serialTool, version);
         chartPanel.pack();
         chartPanel.setVisible(true);
 //        serialTool.OpenSerialTool(param[0]);
