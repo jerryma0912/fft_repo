@@ -1,15 +1,13 @@
-package cn.hyperchain.business;
+package cn.hyperchain;
 
+import cn.hyperchain.view.Panel;
 import org.junit.Test;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class test {
 
     @Test
     public void test() {
-        Panel p = new Panel();
+        cn.hyperchain.view.Panel p = new Panel();
 
         while(true){}
     }
