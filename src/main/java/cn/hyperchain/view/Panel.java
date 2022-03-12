@@ -1,5 +1,6 @@
 package cn.hyperchain.view;
 
+import cn.hyperchain.business.SerialTool;
 import lombok.extern.slf4j.Slf4j;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -8,7 +9,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.Range;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -20,16 +20,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.List;
 
 import static javax.swing.SwingConstants.CENTER;
 
 @Slf4j
 public class Panel extends JFrame{
 
+    // ---------DATA----------
 //    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 //    int width = screenSize.width;
 //    int height = screenSize.height;
+    private SerialTool serialTool = null;
+    private JMenu comMenu = null;
+    private JMenuItem flushMenuItem = null;
 
     private final String[] name = {"基波","点位索引","频率(Hz)","幅值(%)","相位(°)","实际值"};
 
@@ -77,12 +81,48 @@ public class Panel extends JFrame{
         }
     };
 
-    private final JLabel status1 = new JLabel("正常");
+    private final JLabel serialStatus = new JLabel();
     private final JLabel status2 = new JLabel("正常");
     private final JLabel status3 = new JLabel("正常");
     private final JLabel status4 = new JLabel("正常");
     private final JLabel status5 = new JLabel("正常");
 
+
+
+    // ---------ACTION-----------
+    private void flashMenu(SerialTool serialTool) {
+        boolean first_flag = true;
+        // 清除老按钮
+        comMenu.removeAll();
+        comMenu.add(flushMenuItem);
+        comMenu.addSeparator();
+        // 添加新按钮
+        ButtonGroup comButtonGroup = new ButtonGroup();
+        List<String> l = serialTool.findAllSerial();
+        for (String str : l) {
+            final JRadioButtonMenuItem rb = new JRadioButtonMenuItem(str);
+            rb.setName(str);
+            comButtonGroup.add(rb);
+            comMenu.add(rb);
+            rb.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println(rb.getName() + ": " + rb.isSelected());
+                    serialTool.OpenSerialTool(rb.getName());
+
+                    serialStatus.setText(rb.getText());
+                }
+            });
+            // 设置默认项
+            if (first_flag) {
+                rb.setSelected(true);
+                serialTool.OpenSerialTool(rb.getName());
+                first_flag = false;
+
+                serialStatus.setText(rb.getText());
+            }
+        }
+    }
 
     private class saveButtonHandler implements ActionListener {
         @Override
@@ -101,11 +141,16 @@ public class Panel extends JFrame{
         }
     }
 
-    public Panel() {
+
+    // ---------------VIEW------------------
+    public Panel(SerialTool s) {
         super("脉搏监测工具");
 //        super.setUndecorated(true);   // 取消状态栏
         super.setDefaultCloseOperation(EXIT_ON_CLOSE);
         super.setExtendedState(Frame.MAXIMIZED_BOTH);
+
+        serialTool = s;
+
         setJMenuBar(setMenu());
         setUpper();
         setCenter();
@@ -131,18 +176,27 @@ public class Panel extends JFrame{
 
         JMenu editMenu = new JMenu("设置");
         JMenu showExamMenu = new JMenu("监测显示模式");
-        // 组
         ButtonGroup comButtonGroup = new ButtonGroup();
         JRadioButtonMenuItem examDetailItem = new JRadioButtonMenuItem("详细模式");
         JRadioButtonMenuItem examSimpItem = new JRadioButtonMenuItem("精简模式");
         comButtonGroup.add(examDetailItem);
         comButtonGroup.add(examSimpItem);
         examDetailItem.setSelected(true); // 设置默认
-        // 添加到状态栏
         showExamMenu.add(examDetailItem);
         showExamMenu.add(examSimpItem);
         editMenu.add(showExamMenu);
         menuBar.add(editMenu);
+
+        comMenu = new JMenu("串口");
+        flushMenuItem = new JMenuItem("刷新");
+        flashMenu(serialTool);
+        flushMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                flashMenu(serialTool);
+            }
+        });
+        menuBar.add(comMenu);
 
         return menuBar;
     }
@@ -356,7 +410,7 @@ public class Panel extends JFrame{
 
         JPanel statusBar = new JPanel(new GridLayout(1, 3));
 
-        addBottomLabel(statusBar,"状态1", status1);
+        addBottomLabel(statusBar,"当前串口：", serialStatus);
         addBottomLabel(statusBar,"状态2", status2);
         addBottomLabel(statusBar,"状态3", status3);
         addBottomLabel(statusBar,"状态4", status4);
